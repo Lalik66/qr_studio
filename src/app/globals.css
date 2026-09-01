@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Light mode — a coherent mapping of the same token names.
+   Dark is the source of truth (see .dark below); the app defaults to dark. */
+:root {
+  --radius: 1rem;
+
+  --background: #FFFFFF;
+  --foreground: #0A0E1A;
+
+  --card: #FFFFFF;
+  --card-foreground: #0A0E1A;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0E1A;
+
+  --primary: #5B5FE9;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #F1F2F6;
+  --secondary-foreground: #0A0E1A;
+
+  --muted: #F1F2F6;
+  --muted-foreground: #55607A;
+
+  --accent: #EEEFFE;
+  --accent-foreground: #4A4ED4;
+
+  --destructive: #E24D4D;
+  --success: #22B865;
+  --warning: #C9860F;
+
+  --border: rgba(10, 14, 26, 0.10);
+  --input: rgba(10, 14, 26, 0.14);
+  --ring: #5B5FE9;
+
+  --chart-1: #5B5FE9;
+  --chart-2: #4ADE80;
+  --chart-3: #6E72F2;
+  --chart-4: #F5B84B;
+  --chart-5: #F26D6D;
+
+  --sidebar: #F7F8FB;
+  --sidebar-foreground: #0A0E1A;
+  --sidebar-primary: #5B5FE9;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EEEFFE;
+  --sidebar-accent-foreground: #4A4ED4;
+  --sidebar-border: rgba(10, 14, 26, 0.10);
+  --sidebar-ring: #5B5FE9;
+
+  --glow-primary: radial-gradient(closest-side, rgba(91, 95, 233, 0.28), rgba(91, 95, 233, 0) 70%);
+}
+
+/* Dark — the source of truth, straight from DESIGN.md */
+.dark {
+  --background: #0A0E1A;
+  --foreground: #FFFFFF;
+
+  --card: #151A28;
+  --card-foreground: #FFFFFF;
+
+  --popover: #1F2536;
+  --popover-foreground: #FFFFFF;
+
+  --primary: #5B5FE9;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #151A28;
+  --secondary-foreground: #FFFFFF;
+
+  --muted: #151A28;
+  --muted-foreground: #AEB4C2;
+
+  --accent: #1C2233;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #F26D6D;
+  --success: #4ADE80;
+  --warning: #F5B84B;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #5B5FE9;
+
+  --chart-1: #5B5FE9;
+  --chart-2: #4ADE80;
+  --chart-3: #6E72F2;
+  --chart-4: #F5B84B;
+  --chart-5: #F26D6D;
+
+  --sidebar: #0F1420;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #5B5FE9;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1C2233;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #5B5FE9;
+
+  --glow-primary: radial-gradient(closest-side, rgba(91, 95, 233, 0.45), rgba(91, 95, 233, 0) 70%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  /* Legal prose (privacy/terms). Block elements are styled with utilities in
+     the pages themselves; this only gives inline links a theme-token treatment
+     instead of the browser default so nothing on these pages is hardcoded. */
+  .prose-legal a {
+    color: var(--accent-foreground);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .prose-legal a:hover {
+    color: var(--foreground);
+  }
+}
+
+@layer utilities {
+  /* Bottom-center hero glow from DESIGN.md — non-interactive, low-opacity. */
+  .hero-glow {
+    position: relative;
+    isolation: isolate;
+  }
+  .hero-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--glow-primary);
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: 900px 600px;
+    pointer-events: none;
+  }
+  /* Uppercase label treatment used for chips and nav labels. */
+  .label-caps {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+}

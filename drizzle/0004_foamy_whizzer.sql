@@ -1,0 +1,2 @@
+CREATE INDEX "email_log_created_at_idx" ON "email_log" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "qr_code_user_id_created_at_idx" ON "qr_code" USING btree ("user_id","created_at" DESC NULLS LAST);

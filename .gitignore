@@ -63,3 +63,6 @@ next-env.d.ts
 # Temporary files
 tmp/
 temp/
+
+# Uploaded files (local storage driver in dev; Vercel Blob in prod)
+public/uploads/

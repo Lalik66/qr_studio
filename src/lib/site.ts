@@ -1,5 +1,25 @@
-export const siteUrl =
-  process.env.APP_URL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+// Resolve the public site URL from env, tolerating empty strings, missing
+// protocols and bad values so the production build never crashes on `new URL()`.
+// `||` (not `??`) is deliberate: an env var set to "" must fall through.
+function resolveSiteUrl(): string {
+  const candidate =
+    process.env.APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    process.env.VERCEL_URL ||
+    "";
+  const trimmed = candidate.trim();
+  if (!trimmed) return "http://localhost:3000";
+  // Vercel's own URL vars are bare hostnames — add a scheme if none is present.
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    return new URL(withProtocol).origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
+export const siteUrl = resolveSiteUrl();
 
 export const site = {
   name: "QR Studio",

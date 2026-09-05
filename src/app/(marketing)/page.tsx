@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { AnimatedBlock, interactiveBlockClassName } from "@/components/animated-block";
 import { Brand, QrGlyph } from "@/components/brand";
 import { FaqSection } from "@/components/marketing/faq-section";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("marketing");
@@ -58,26 +60,32 @@ export default async function LandingPage() {
       {/* Hero */}
       <section className="relative z-10 px-4 pt-16 text-center md:px-16">
         <div className="mx-auto max-w-[1200px]">
-          <h1 className="mx-auto text-4xl font-extrabold uppercase leading-none tracking-tight md:text-6xl lg:text-7xl">
-            {t.rich("heroTitle", {
-              accent: (chunks) => (
-                <span className="text-primary">{chunks}</span>
-              ),
-            })}
-          </h1>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-            {t("heroSubtitle")}
-          </p>
-          <div className="mt-10">
-            <Button
-              size="lg"
-              className="h-12 rounded-lg px-6 text-base"
-              render={<Link href="/sign-up" />}
-            >
-              <QrGlyph className="size-5" />
-              {t("heroCta")}
-            </Button>
-          </div>
+          <AnimatedBlock index={0}>
+            <h1 className="mx-auto text-4xl font-extrabold uppercase leading-none tracking-tight md:text-6xl lg:text-7xl">
+              {t.rich("heroTitle", {
+                accent: (chunks) => (
+                  <span className="text-primary">{chunks}</span>
+                ),
+              })}
+            </h1>
+          </AnimatedBlock>
+          <AnimatedBlock index={1}>
+            <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
+              {t("heroSubtitle")}
+            </p>
+          </AnimatedBlock>
+          <AnimatedBlock index={2}>
+            <div className="mt-10">
+              <Button
+                size="lg"
+                className="h-12 rounded-lg px-6 text-base"
+                render={<Link href="/sign-up" />}
+              >
+                <QrGlyph className="size-5" />
+                {t("heroCta")}
+              </Button>
+            </div>
+          </AnimatedBlock>
         </div>
       </section>
 
@@ -88,28 +96,36 @@ export default async function LandingPage() {
       >
         <div className="mx-auto max-w-[1200px]">
           {/* Visual QR card */}
-          <div className="flex flex-col items-center">
-            <div className="flex size-40 items-center justify-center rounded-lg border border-border bg-popover md:size-48">
+          <AnimatedBlock index={0} className="flex flex-col items-center">
+            <div
+              className={cn(
+                "flex size-40 items-center justify-center rounded-lg border border-border bg-popover md:size-48",
+                interactiveBlockClassName
+              )}
+            >
               <QrGlyph className="size-20 text-muted-foreground md:size-24" />
             </div>
             <span className="label-caps mt-4 text-sm text-foreground">
               {t("yourQrCode")}
             </span>
-          </div>
+          </AnimatedBlock>
 
           {/* Steps */}
           <div className="mt-12 grid gap-4 sm:grid-cols-3 md:gap-8">
             <StepCard
+              index={1}
               number="1"
               title={t("step1Title")}
               description={t("step1Desc")}
             />
             <StepCard
+              index={2}
               number="2"
               title={t("step2Title")}
               description={t("step2Desc")}
             />
             <StepCard
+              index={3}
               number="3"
               title={t("step3Title")}
               description={t("step3Desc")}
@@ -121,12 +137,24 @@ export default async function LandingPage() {
       {/* Features */}
       <section className="relative z-10 px-4 pb-16 md:px-16" aria-label="Features">
         <div className="mx-auto flex max-w-[1200px] flex-wrap justify-center gap-4">
-          <FeaturePill icon={<PaletteIcon />}>{t("feature1")}</FeaturePill>
-          <FeaturePill icon={<ImageIcon />}>{t("feature2")}</FeaturePill>
-          <FeaturePill icon={<DownloadIcon />}>{t("feature3")}</FeaturePill>
-          <FeaturePill icon={<FolderIcon />}>{t("feature4")}</FeaturePill>
-          <FeaturePill icon={<SearchIcon />}>{t("feature5")}</FeaturePill>
-          <FeaturePill icon={<InfinityIcon />}>{t("feature6")}</FeaturePill>
+          <FeaturePill index={0} icon={<PaletteIcon />}>
+            {t("feature1")}
+          </FeaturePill>
+          <FeaturePill index={1} icon={<ImageIcon />}>
+            {t("feature2")}
+          </FeaturePill>
+          <FeaturePill index={2} icon={<DownloadIcon />}>
+            {t("feature3")}
+          </FeaturePill>
+          <FeaturePill index={3} icon={<FolderIcon />}>
+            {t("feature4")}
+          </FeaturePill>
+          <FeaturePill index={4} icon={<SearchIcon />}>
+            {t("feature5")}
+          </FeaturePill>
+          <FeaturePill index={5} icon={<InfinityIcon />}>
+            {t("feature6")}
+          </FeaturePill>
         </div>
       </section>
 
@@ -151,37 +179,55 @@ export default async function LandingPage() {
 }
 
 function StepCard({
+  index,
   number,
   title,
   description,
 }: {
+  index: number;
   number: string;
   title: string;
   description: string;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center">
-      <span className="flex size-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-        {number}
-      </span>
-      <h3 className="mt-4 text-base font-semibold text-foreground">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-    </div>
+    <AnimatedBlock index={index}>
+      <div
+        className={cn(
+          "flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center",
+          interactiveBlockClassName
+        )}
+      >
+        <span className="flex size-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+          {number}
+        </span>
+        <h3 className="mt-4 text-base font-semibold text-foreground">{title}</h3>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      </div>
+    </AnimatedBlock>
   );
 }
 
 function FeaturePill({
+  index,
   icon,
   children,
 }: {
+  index: number;
   icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground">
-      <span className="text-primary">{icon}</span>
-      <span>{children}</span>
-    </div>
+    <AnimatedBlock index={index}>
+      <div
+        className={cn(
+          "flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground",
+          interactiveBlockClassName
+        )}
+      >
+        <span className="text-primary">{icon}</span>
+        <span>{children}</span>
+      </div>
+    </AnimatedBlock>
   );
 }
 

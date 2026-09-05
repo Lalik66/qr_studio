@@ -7,6 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AnimatedBlock, interactiveBlockClassName } from "@/components/animated-block";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +33,7 @@ import {
   MoreVerticalIcon,
 } from "lucide-react";
 import { deleteQrCode } from "@/app/(dashboard)/actions";
+import { cn } from "@/lib/utils";
 
 type QrCodeData = {
   id: string;
@@ -104,16 +106,18 @@ export function QrList({ codes }: { codes: QrCodeData[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder={t("searchPlaceholder")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      <AnimatedBlock index={0}>
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder={t("searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </AnimatedBlock>
 
       {filteredCodes.length === 0 ? (
         <div className="py-12 text-center">
@@ -124,15 +128,8 @@ export function QrList({ codes }: { codes: QrCodeData[] }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCodes.map((code, index) => (
-            <div
-              key={code.id}
-              style={{
-                animationDuration: "500ms",
-                animationDelay: `${Math.min(index, 8) * 70}ms`,
-              }}
-              className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both motion-reduce:animate-none"
-            >
-            <Card className="h-full overflow-hidden ease-out transition duration-200 hover:-translate-y-0.5 hover:ring-primary/40 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+            <AnimatedBlock key={code.id} index={index + 1}>
+            <Card className={cn("h-full overflow-hidden", interactiveBlockClassName)}>
               <CardContent className="flex gap-4 pt-4">
                 <div
                   className="flex-shrink-0 rounded-lg p-2"
@@ -221,7 +218,7 @@ export function QrList({ codes }: { codes: QrCodeData[] }) {
                 </DropdownMenu>
               </CardContent>
             </Card>
-            </div>
+            </AnimatedBlock>
           ))}
         </div>
       )}

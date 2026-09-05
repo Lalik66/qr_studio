@@ -4,6 +4,8 @@ import { getSystemStatus, getSystemStatusSummary } from "@/lib/system-status";
 import { db } from "@/lib/db";
 import { emailLog } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
+import { cn } from "@/lib/utils";
+import { AnimatedBlock, interactiveBlockClassName } from "@/components/animated-block";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -57,10 +59,12 @@ export default async function SystemPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("subtitle")}</p>
-      </div>
+      <AnimatedBlock index={0}>
+        <div>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
+        </div>
+      </AnimatedBlock>
 
       {/* Configuration Health Section */}
       <section className="space-y-4">
@@ -76,17 +80,10 @@ export default async function SystemPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           {statusItems.map((item, index) => (
-            <div
-              key={item.key}
-              style={{
-                animationDuration: "500ms",
-                animationDelay: `${index * 70}ms`,
-              }}
-              className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both motion-reduce:animate-none"
-            >
+            <AnimatedBlock key={item.key} index={index}>
               <Card
                 size="sm"
-                className="h-full ease-out transition duration-200 hover:-translate-y-0.5 hover:ring-primary/40 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className={cn("h-full", interactiveBlockClassName)}
               >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between gap-2">
@@ -100,13 +97,13 @@ export default async function SystemPage() {
                 <p className="text-sm text-muted-foreground">{item.detail}</p>
               </CardContent>
               </Card>
-            </div>
+            </AnimatedBlock>
           ))}
         </div>
       </section>
 
       {/* Email Activity Section */}
-      <section className="space-y-4">
+      <AnimatedBlock index={statusItems.length + 1} className="space-y-4">
         <h2 className="text-lg font-semibold">{t("emailActivity")}</h2>
 
         {emails.length === 0 ? (
@@ -182,7 +179,7 @@ export default async function SystemPage() {
         {emails.some((e) => e.status === "failed") && (
           <p className="text-sm text-muted-foreground">{t("failedHint")}</p>
         )}
-      </section>
+      </AnimatedBlock>
     </div>
   );
 }

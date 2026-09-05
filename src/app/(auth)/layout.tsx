@@ -1,3 +1,4 @@
+import { AnimatedBlock } from "@/components/animated-block";
 import { Brand } from "@/components/brand";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -10,7 +11,9 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       <div className="mb-10">
         <Brand />
       </div>
-      <div className="w-full max-w-sm">{children}</div>
+      <div className="w-full max-w-sm">
+        <AnimatedBlock>{children}</AnimatedBlock>
+      </div>
     </main>
   );
 }

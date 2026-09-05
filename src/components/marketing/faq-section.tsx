@@ -9,6 +9,7 @@ import {
   PencilIcon,
   ScanLineIcon,
 } from "lucide-react";
+import { AnimatedBlock, interactiveBlockClassName } from "@/components/animated-block";
 import {
   Accordion,
   AccordionContent,
@@ -64,15 +65,19 @@ export function FaqSection() {
     >
       <div className="mx-auto max-w-[1200px]">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
-          <h2
-            id="faq-heading"
-            className="text-3xl font-extrabold uppercase leading-tight tracking-tight md:text-4xl lg:text-5xl"
-          >
-            {t("faqHeading")}
-          </h2>
-          <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
-            {t("faqIntro")}
-          </p>
+          <AnimatedBlock index={0}>
+            <h2
+              id="faq-heading"
+              className="text-3xl font-extrabold uppercase leading-tight tracking-tight md:text-4xl lg:text-5xl"
+            >
+              {t("faqHeading")}
+            </h2>
+          </AnimatedBlock>
+          <AnimatedBlock index={1}>
+            <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
+              {t("faqIntro")}
+            </p>
+          </AnimatedBlock>
         </div>
 
         <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-16">
@@ -80,16 +85,17 @@ export function FaqSection() {
             className="flex flex-col gap-3"
             aria-label="FAQ categories"
           >
-            {FAQ_CATEGORIES.map(({ id, labelKey, icon }) => {
+            {FAQ_CATEGORIES.map(({ id, labelKey, icon }, navIndex) => {
               const active = category === id;
               return (
+                <AnimatedBlock key={id} index={navIndex + 2}>
                 <button
-                  key={id}
                   type="button"
                   onClick={() => setCategory(id)}
                   aria-current={active ? "true" : undefined}
                   className={cn(
-                    "flex min-h-11 w-full items-center gap-3 rounded-full border px-4 py-3 text-left text-sm font-medium transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "flex min-h-11 w-full items-center gap-3 rounded-full border px-4 py-3 text-left text-sm font-medium outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                    interactiveBlockClassName,
                     active
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-card text-foreground hover:bg-accent"
@@ -115,10 +121,12 @@ export function FaqSection() {
                     />
                   )}
                 </button>
+                </AnimatedBlock>
               );
             })}
           </nav>
 
+          <AnimatedBlock index={5}>
           <Accordion
             key={category}
             defaultValue={["0"]}
@@ -139,6 +147,7 @@ export function FaqSection() {
               </AccordionItem>
             ))}
           </Accordion>
+          </AnimatedBlock>
         </div>
       </div>
     </section>

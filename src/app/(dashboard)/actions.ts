@@ -7,27 +7,70 @@ import { qrCode } from "@/lib/db/schema";
 import { requireUser } from "@/lib/session";
 import { deleteFile } from "@/lib/storage";
 import { isSafeLogoRef } from "@/lib/qr";
+import {
+  resolveQrType,
+  resolveWifiEncryption,
+  type QrType,
+  type WifiEncryption,
+} from "@/lib/qr-content";
+import {
+  MAX_CAPTION_LENGTH,
+  resolveCaptionPosition,
+  resolveFrameStyle,
+  type CaptionPosition,
+  type FrameStyle,
+} from "@/lib/qr-frame";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
 type QrCodeInput = {
   title: string;
-  destinationUrl: string;
+  type?: string;
+  destinationUrl?: string;
+  phone?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  org?: string | null;
+  ssid?: string | null;
+  wifiPassword?: string | null;
+  wifiEncryption?: string | null;
+  wifiHidden?: boolean | null;
   foregroundColor: string;
   backgroundColor: string;
   size: number;
   logoUrl?: string | null;
   logoPath?: string | null;
+  frameEnabled?: boolean;
+  frameStyle?: string;
+  frameCaption?: string;
+  frameCaptionPosition?: string;
+  frameColor?: string;
 };
 
 type ValidatedFields = {
   title: string;
+  type: QrType;
   destinationUrl: string;
+  phone: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  org: string | null;
+  ssid: string | null;
+  wifiPassword: string | null;
+  wifiEncryption: WifiEncryption | null;
+  wifiHidden: boolean | null;
   foregroundColor: string;
   backgroundColor: string;
   size: number;
   logoUrl: string | null;
   logoPath: string | null;
+  frameEnabled: boolean;
+  frameStyle: FrameStyle;
+  frameCaption: string;
+  frameCaptionPosition: CaptionPosition;
+  frameColor: string;
 };
 
 function isValidHexColor(color: string): boolean {
@@ -41,6 +84,10 @@ function isValidUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function normalizeSize(size: number): number {
@@ -95,9 +142,67 @@ function validateInput(
     return { ok: false, error: "Title is required" };
   }
 
-  const destinationUrl = input.destinationUrl?.trim() ?? "";
-  if (!isValidUrl(destinationUrl)) {
-    return { ok: false, error: "Enter a valid URL starting with http:// or https://" };
+  // Content depends on the type. Only the fields relevant to the chosen type
+  // are validated and stored; the rest are cleared so a code never carries
+  // stale content from a type the user switched away from.
+  const type = resolveQrType(input.type);
+  let destinationUrl = "";
+  let phone: string | null = null;
+  let firstName: string | null = null;
+  let lastName: string | null = null;
+  let email: string | null = null;
+  let org: string | null = null;
+  let ssid: string | null = null;
+  let wifiPassword: string | null = null;
+  let wifiEncryption: WifiEncryption | null = null;
+  let wifiHidden: boolean | null = null;
+
+  if (type === "link") {
+    destinationUrl = input.destinationUrl?.trim() ?? "";
+    if (!isValidUrl(destinationUrl)) {
+      return { ok: false, error: "Enter a valid URL starting with http:// or https://" };
+    }
+  } else if (type === "phone") {
+    phone = input.phone?.trim() ?? "";
+    if (!phone) {
+      return { ok: false, error: "Enter a phone number" };
+    }
+  } else if (type === "wifi") {
+    ssid = input.ssid?.trim() ?? "";
+    wifiEncryption = resolveWifiEncryption(input.wifiEncryption);
+    wifiHidden = input.wifiHidden === true;
+    if (!ssid) {
+      return { ok: false, error: "Enter the network name (SSID)" };
+    }
+    if (wifiEncryption === "nopass") {
+      // Open network: no password is stored.
+      wifiPassword = null;
+    } else {
+      // Passwords may contain leading/trailing spaces, so don't trim them.
+      wifiPassword = input.wifiPassword ?? "";
+      if (!wifiPassword) {
+        return { ok: false, error: "Enter the WiFi password" };
+      }
+    }
+  } else {
+    // contact
+    firstName = input.firstName?.trim() ?? "";
+    lastName = input.lastName?.trim() ?? "";
+    phone = input.phone?.trim() ?? "";
+    email = input.email?.trim() ?? "";
+    org = input.org?.trim() || null;
+    if (!firstName) {
+      return { ok: false, error: "Enter a first name" };
+    }
+    if (!lastName) {
+      return { ok: false, error: "Enter a last name" };
+    }
+    if (!phone) {
+      return { ok: false, error: "Enter a phone number" };
+    }
+    if (!isValidEmail(email)) {
+      return { ok: false, error: "Enter a valid email address" };
+    }
   }
 
   if (!isValidHexColor(input.foregroundColor)) {
@@ -105,6 +210,18 @@ function validateInput(
   }
   if (!isValidHexColor(input.backgroundColor)) {
     return { ok: false, error: "Enter the background colour as a hex value like #FFFFFF" };
+  }
+
+  // Frame is purely visual output styling stored per code (like the content
+  // colours). Unknown style/position values fall back to their defaults, and the
+  // caption is trimmed and capped so the layout stays predictable.
+  const frameEnabled = input.frameEnabled === true;
+  const frameStyle = resolveFrameStyle(input.frameStyle);
+  const frameCaptionPosition = resolveCaptionPosition(input.frameCaptionPosition);
+  const frameCaption = (input.frameCaption ?? "").trim().slice(0, MAX_CAPTION_LENGTH);
+  const frameColor = input.frameColor ?? "#5B5FE9";
+  if (!isValidHexColor(frameColor)) {
+    return { ok: false, error: "Enter the frame colour as a hex value like #5B5FE9" };
   }
 
   const logoUrl = input.logoUrl ?? null;
@@ -121,12 +238,27 @@ function validateInput(
     ok: true,
     data: {
       title,
+      type,
       destinationUrl,
+      phone,
+      firstName,
+      lastName,
+      email,
+      org,
+      ssid,
+      wifiPassword,
+      wifiEncryption,
+      wifiHidden,
       foregroundColor: input.foregroundColor,
       backgroundColor: input.backgroundColor,
       size: normalizeSize(input.size),
       logoUrl,
       logoPath,
+      frameEnabled,
+      frameStyle,
+      frameCaption,
+      frameCaptionPosition,
+      frameColor,
     },
   };
 }

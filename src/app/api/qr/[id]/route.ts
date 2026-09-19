@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { qrCode } from "@/lib/db/schema";
 import { generateQrPng, generateQrSvg } from "@/lib/qr";
+import { buildQrContent, resolveQrType } from "@/lib/qr-content";
+import { resolveCaptionPosition, resolveFrameStyle } from "@/lib/qr-frame";
 import { getSession } from "@/lib/session";
 import { and, eq } from "drizzle-orm";
 
@@ -55,13 +57,35 @@ export async function GET(
   const url = new URL(req.url);
   const format = url.searchParams.get("format") === "svg" ? "svg" : "png";
 
-  // Build QR options from row
+  // Build the encoded content from the row's fields (link/phone/contact),
+  // then feed it to the shared generator — same string the client previews.
   const opts = {
-    url: row.destinationUrl,
+    url: buildQrContent({
+      type: resolveQrType(row.type),
+      destinationUrl: row.destinationUrl,
+      phone: row.phone,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      email: row.email,
+      org: row.org,
+      ssid: row.ssid,
+      wifiPassword: row.wifiPassword,
+      wifiEncryption: row.wifiEncryption,
+      wifiHidden: row.wifiHidden,
+    }),
     foregroundColor: row.foregroundColor,
     backgroundColor: row.backgroundColor,
     size: row.size,
     logoUrl: row.logoUrl,
+    // Frame is opt-in per code; when off, output stays exactly as before.
+    frame: row.frameEnabled
+      ? {
+          style: resolveFrameStyle(row.frameStyle),
+          caption: row.frameCaption,
+          position: resolveCaptionPosition(row.frameCaptionPosition),
+          color: row.frameColor,
+        }
+      : null,
   };
 
   const safeFilename = sanitizeFilename(row.title);

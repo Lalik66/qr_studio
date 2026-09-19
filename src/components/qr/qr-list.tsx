@@ -33,16 +33,42 @@ import {
   MoreVerticalIcon,
 } from "lucide-react";
 import { deleteQrCode } from "@/app/(dashboard)/actions";
+import {
+  buildQrContent,
+  buildReadableContent,
+  resolveQrType,
+} from "@/lib/qr-content";
+import {
+  resolveCaptionPosition,
+  resolveFrameStyle,
+  type FrameOptions,
+} from "@/lib/qr-frame";
+import { FramedQr } from "@/components/qr/framed-qr";
 import { cn } from "@/lib/utils";
 
 type QrCodeData = {
   id: string;
   title: string;
+  type: string;
   destinationUrl: string;
+  phone: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  org: string | null;
+  ssid: string | null;
+  wifiPassword: string | null;
+  wifiEncryption: string | null;
+  wifiHidden: boolean | null;
   foregroundColor: string;
   backgroundColor: string;
   size: number;
   logoUrl: string | null;
+  frameEnabled: boolean;
+  frameStyle: string;
+  frameCaption: string;
+  frameCaptionPosition: string;
+  frameColor: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -77,16 +103,46 @@ function relativeTime(date: Date, locale: string): string {
 
 export function QrList({ codes }: { codes: QrCodeData[] }) {
   const t = useTranslations("list");
+  const tf = useTranslations("form");
   const locale = useLocale();
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<QrCodeData | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // The value each code encodes and its readable label both come from the same
+  // shared builders, so the list preview matches the download and the form.
+  const contentFields = (code: QrCodeData) => ({
+    type: resolveQrType(code.type),
+    destinationUrl: code.destinationUrl,
+    phone: code.phone,
+    firstName: code.firstName,
+    lastName: code.lastName,
+    email: code.email,
+    org: code.org,
+    ssid: code.ssid,
+    wifiPassword: code.wifiPassword,
+    wifiEncryption: code.wifiEncryption,
+    wifiHidden: code.wifiHidden,
+  });
+  const readableFor = (code: QrCodeData) =>
+    buildReadableContent(contentFields(code), {
+      call: tf("tooltipCall"),
+      saveContact: tf("tooltipSaveContact"),
+      wifi: tf("tooltipWifi"),
+    });
+  // The frame settings each thumbnail shares with its download.
+  const frameFor = (code: QrCodeData): FrameOptions => ({
+    style: resolveFrameStyle(code.frameStyle),
+    caption: code.frameCaption,
+    position: resolveCaptionPosition(code.frameCaptionPosition),
+    color: code.frameColor,
+  });
+
   const filteredCodes = codes.filter((code) => {
     const query = search.toLowerCase();
     return (
       code.title.toLowerCase().includes(query) ||
-      code.destinationUrl.toLowerCase().includes(query)
+      readableFor(code).toLowerCase().includes(query)
     );
   });
 
@@ -132,33 +188,60 @@ export function QrList({ codes }: { codes: QrCodeData[] }) {
             <Card className={cn("h-full overflow-hidden", interactiveBlockClassName)}>
               <CardContent className="flex gap-4 pt-4">
                 <div
-                  className="flex-shrink-0 rounded-lg p-2"
-                  style={{ backgroundColor: code.backgroundColor }}
+                  className={cn(
+                    "flex-shrink-0 rounded-lg",
+                    !code.frameEnabled && "p-2"
+                  )}
+                  style={
+                    code.frameEnabled
+                      ? undefined
+                      : { backgroundColor: code.backgroundColor }
+                  }
                 >
-                  <QRCodeSVG
-                    value={code.destinationUrl}
-                    size={80}
-                    fgColor={code.foregroundColor}
-                    bgColor={code.backgroundColor}
-                    level="H"
-                    imageSettings={
-                      code.logoUrl
-                        ? {
-                            src: code.logoUrl,
-                            height: 20,
-                            width: 20,
-                            excavate: true,
-                          }
-                        : undefined
-                    }
-                  />
+                  {code.frameEnabled ? (
+                    <FramedQr size={80} frame={frameFor(code)}>
+                      <QRCodeSVG
+                        value={
+                          buildQrContent(contentFields(code)) ||
+                          "https://example.com"
+                        }
+                        size={80}
+                        fgColor={code.foregroundColor}
+                        bgColor={code.backgroundColor}
+                        level="H"
+                        imageSettings={
+                          code.logoUrl
+                            ? { src: code.logoUrl, height: 20, width: 20, excavate: true }
+                            : undefined
+                        }
+                      />
+                    </FramedQr>
+                  ) : (
+                    <QRCodeSVG
+                      value={buildQrContent(contentFields(code)) || "https://example.com"}
+                      size={80}
+                      fgColor={code.foregroundColor}
+                      bgColor={code.backgroundColor}
+                      level="H"
+                      imageSettings={
+                        code.logoUrl
+                          ? {
+                              src: code.logoUrl,
+                              height: 20,
+                              width: 20,
+                              excavate: true,
+                            }
+                          : undefined
+                      }
+                    />
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col gap-1 overflow-hidden">
                   <h3 className="truncate font-medium text-foreground">
                     {code.title}
                   </h3>
                   <p className="truncate font-mono text-xs text-muted-foreground">
-                    {code.destinationUrl}
+                    {readableFor(code)}
                   </p>
                   <p
                     className="mt-auto text-xs text-muted-foreground"

@@ -1,6 +1,7 @@
 import "server-only";
 import QRCode from "qrcode";
 import sharp from "sharp";
+import { computeFrameLayout, type FrameOptions } from "./qr-frame";
 
 export type QrOptions = {
   url: string;
@@ -8,7 +9,13 @@ export type QrOptions = {
   backgroundColor: string; // hex like "#FFFFFF"
   size: number; // output width in px, e.g. 512
   logoUrl?: string | null; // optional center logo; a local "/uploads/..." path or a Vercel Blob https URL
+  frame?: FrameOptions | null; // optional decorative frame + caption drawn OUTSIDE the QR box
 };
+
+// Font stack for the caption. `sans-serif` is last so a rasteriser without the
+// preferred faces still renders the text rather than dropping it.
+const CAPTION_FONT_FAMILY =
+  "'Inter','Helvetica Neue',Helvetica,Arial,sans-serif";
 
 // Shared QR geometry — one source of truth for both the PNG and SVG renderers.
 const MARGIN = 4; // quiet-zone width in modules
@@ -119,6 +126,13 @@ function clampSize(size: number): number {
  * cannot be loaded is skipped rather than failing the request.
  */
 export async function generateQrPng(opts: QrOptions): Promise<Buffer> {
+  // A framed code is drawn once as SVG (border, caption text and all) and
+  // rasterised, so the PNG and SVG downloads contain the exact same frame.
+  if (opts.frame) {
+    const svg = await generateQrSvg(opts);
+    return sharp(Buffer.from(svg)).png().toBuffer();
+  }
+
   const size = clampSize(opts.size);
 
   const base = await QRCode.toBuffer(opts.url, {
@@ -183,11 +197,11 @@ export async function generateQrSvg(opts: QrOptions): Promise<string> {
   const fg = escapeXml(opts.foregroundColor);
   const bg = escapeXml(opts.backgroundColor);
 
-  const parts: string[] = [];
-  parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges">`,
-  );
-  parts.push(`<rect width="${total}" height="${total}" fill="${bg}"/>`);
+  // The QR box (background, modules and logo) in module units. Reused as-is for
+  // a plain code and, for a framed code, placed inside a scaled group so the
+  // modules and their quiet zone are never touched by the frame.
+  const qrParts: string[] = [];
+  qrParts.push(`<rect width="${total}" height="${total}" fill="${bg}"/>`);
 
   const inKnockout = (col: number, row: number): boolean => {
     const cx = col + 0.5;
@@ -214,7 +228,7 @@ export async function generateQrSvg(opts: QrOptions): Promise<string> {
         const runLength = col - runStart;
         const x = MARGIN + runStart;
         const y = MARGIN + row;
-        parts.push(
+        qrParts.push(
           `<rect x="${x}" y="${y}" width="${runLength}" height="1" fill="${fg}"/>`,
         );
       } else {
@@ -226,12 +240,73 @@ export async function generateQrSvg(opts: QrOptions): Promise<string> {
   if (hasLogo) {
     const logoX = (total - logoModules) / 2;
     const logoY = (total - logoModules) / 2;
-    parts.push(
+    qrParts.push(
       `<image href="data:image/png;base64,${logoBase64}" x="${logoX}" y="${logoY}" width="${logoModules}" height="${logoModules}" preserveAspectRatio="xMidYMid meet"/>`,
     );
   }
 
-  parts.push("</svg>");
+  // Plain code: the QR box fills the whole SVG, exactly as before.
+  if (!opts.frame) {
+    return [
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges">`,
+      ...qrParts,
+      "</svg>",
+    ].join("");
+  }
 
+  // Framed code: place the QR box (scaled to `size` px) inside the computed
+  // frame layout and draw the border/card/banner and caption around it.
+  return buildFramedSvg(qrParts, total, size, opts.frame);
+}
+
+/**
+ * Wrap the QR box markup in a decorative frame. The QR content is emitted in
+ * module units, so it is scaled to `qrPx` and translated to its slot; the frame
+ * and caption are drawn in the outer pixel coordinate space around it.
+ */
+function buildFramedSvg(
+  qrParts: string[],
+  totalModules: number,
+  qrPx: number,
+  frame: FrameOptions,
+): string {
+  const layout = computeFrameLayout(qrPx, frame);
+  const scale = qrPx / totalModules;
+  const frameColor = escapeXml(frame.color);
+
+  const parts: string[] = [];
+  parts.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.totalWidth}" height="${layout.totalHeight}" viewBox="0 0 ${layout.totalWidth} ${layout.totalHeight}">`,
+  );
+
+  if (layout.drawBackground) {
+    parts.push(
+      `<rect x="0" y="0" width="${layout.totalWidth}" height="${layout.totalHeight}" rx="${layout.radius}" ry="${layout.radius}" fill="${frameColor}"/>`,
+    );
+  }
+
+  parts.push(
+    `<g transform="translate(${layout.qrX} ${layout.qrY}) scale(${scale})" shape-rendering="crispEdges">`,
+    ...qrParts,
+    "</g>",
+  );
+
+  const cap = layout.caption;
+  if (cap) {
+    if (cap.drawBar) {
+      parts.push(
+        `<rect x="${cap.x}" y="${cap.y}" width="${cap.width}" height="${cap.height}" fill="${frameColor}"/>`,
+      );
+    }
+    if (cap.text) {
+      const cx = cap.x + cap.width / 2;
+      const cy = cap.y + cap.height / 2;
+      parts.push(
+        `<text x="${cx}" y="${cy}" font-family="${CAPTION_FONT_FAMILY}" font-size="${cap.fontSize}" font-weight="600" fill="${escapeXml(cap.textColor)}" text-anchor="middle" dominant-baseline="central">${escapeXml(cap.text)}</text>`,
+      );
+    }
+  }
+
+  parts.push("</svg>");
   return parts.join("");
 }

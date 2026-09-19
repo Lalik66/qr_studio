@@ -68,7 +68,7 @@ services:
       POSTGRES_PASSWORD: app
       POSTGRES_DB: app
     ports:
-      - "5432:5432"
+      - "5433:5433"
     volumes:
       - pgdata:/var/lib/postgresql/data
 volumes:

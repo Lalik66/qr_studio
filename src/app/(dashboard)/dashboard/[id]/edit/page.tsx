@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { qrCode } from "@/lib/db/schema";
 import { AnimatedBlock } from "@/components/animated-block";
 import { QrForm } from "@/components/qr/qr-form";
+import { resolveQrType } from "@/lib/qr-content";
+import { resolveCaptionPosition, resolveFrameStyle } from "@/lib/qr-frame";
 
 export default async function EditQrCodePage({
   params,
@@ -44,12 +46,27 @@ export default async function EditQrCodePage({
           initialData={{
             id: code.id,
             title: code.title,
+            type: resolveQrType(code.type),
             destinationUrl: code.destinationUrl,
+            phone: code.phone,
+            firstName: code.firstName,
+            lastName: code.lastName,
+            email: code.email,
+            org: code.org,
+            ssid: code.ssid,
+            wifiPassword: code.wifiPassword,
+            wifiEncryption: code.wifiEncryption,
+            wifiHidden: code.wifiHidden,
             foregroundColor: code.foregroundColor,
             backgroundColor: code.backgroundColor,
             size: code.size,
             logoUrl: code.logoUrl,
             logoPath: code.logoPath,
+            frameEnabled: code.frameEnabled,
+            frameStyle: resolveFrameStyle(code.frameStyle),
+            frameCaption: code.frameCaption,
+            frameCaptionPosition: resolveCaptionPosition(code.frameCaptionPosition),
+            frameColor: code.frameColor,
           }}
         />
       </AnimatedBlock>
